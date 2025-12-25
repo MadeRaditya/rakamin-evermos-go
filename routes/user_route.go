@@ -15,4 +15,7 @@ func UserRoute(api fiber.Router) {
 
 	userRoute.Get("/alamat", user.GetAllAlamat)
 	userRoute.Post("/alamat", user.CreateAlamat)
+	userRoute.Get("/alamat/:id", user.GetAlamatByID)
+	userRoute.Put("/alamat/:id", user.UpdateAlamat)
+	userRoute.Delete("/alamat/:id", user.DeleteAlamat)
 }
