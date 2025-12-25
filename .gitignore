@@ -1,0 +1,34 @@
+# Go build
+/bin/
+/obj/
+
+# Vendor
+/vendor/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+
+# Env files
+.env
+
+# Database
+*.db
+*.sqlite
+
+# Coverage
+*.out
