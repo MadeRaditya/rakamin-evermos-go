@@ -33,7 +33,11 @@ func Register(c *fiber.Ctx) error {
 	var input RegisterInput
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Input tidak valid"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": false,
+			"message": "Failed to POST data",
+			"errors":  []string{"Input tidak valid"},
+			"data":    nil,
+		})
 	}
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(input.KataSandi), bcrypt.DefaultCost)
@@ -43,7 +47,10 @@ func Register(c *fiber.Ctx) error {
 		parsedDate, err := time.Parse("02/01/2006", input.TanggalLahir)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Format tanggal_Lahir harus DD/MM/YYYY",
+				"status":  false,
+				"message": "Failed to POST data",
+				"errors":  []string{"Format tanggal_Lahir harus DD/MM/YYYY"},
+				"data":    nil,
 			})
 		}
 		tglLahir = parsedDate
@@ -62,7 +69,10 @@ func Register(c *fiber.Ctx) error {
 
 	if err := database.DB.Create(&user).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Gagal registrasi. Email atau No Telp mungkin sudah terdaftar.",
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
@@ -73,11 +83,11 @@ func Register(c *fiber.Ctx) error {
 	}
 	database.DB.Create(&toko)
 
-	var result models.User
-	database.DB.Preload("Toko").First(&result, user.ID)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Register Berhasil",
-		"data":    result,
+		"status":  true,
+		"message": "Succeed to POST data",
+		"errors":  nil,
+		"data":    "Register Succeed",
 	})
 }
 
@@ -87,16 +97,29 @@ func Login(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Input tidak valid"})
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"Input tidak valid"},
+			"data":    nil,
+		})
 	}
 
 	if err := database.DB.Where("no_telp = ?", input.NoTelp).First(&user).Error; err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "No Telp atau Password salah"})
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"No Telp atau Password salah"},
+			"data":    nil,
+		})
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.KataSandi), []byte(input.KataSandi)); err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "No Telp atau Password salah"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"No Telp atau Password salah"},
+			"data":    nil,
+		})
 	}
 
 	claims := jwt.MapClaims{
@@ -107,16 +130,30 @@ func Login(c *fiber.Ctx) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	t, err := token.SignedString(config.JWTSecret())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Gagal generate token"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to generate token",
+			"errors":  []string{err.Error()},
+			"data":    nil,
+		})
 	}
 
-	var result models.User
-	database.DB.Preload("Toko").First(&result, user.ID)
+	responseData := fiber.Map{
+		"nama":          user.Nama,
+		"no_telp":       user.NoTelp,
+		"tanggal_Lahir": user.TanggalLahir.Format("02/01/2006"),
+		"tentang":       user.Tentang,
+		"pekerjaan":     user.Pekerjaan,
+		"email":         user.Email,
+		"id_provinsi":   user.IDProvinsi,
+		"id_kota":       user.IDKota,
+		"token":         t,
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": fiber.Map{
-			"token": t,
-			"user":  result,
-		},
-		"message": "Login Berhasil",
+		"status":  true,
+		"message": "Succeed to POST data",
+		"errors":  nil,
+		"data":    responseData,
 	})
 }

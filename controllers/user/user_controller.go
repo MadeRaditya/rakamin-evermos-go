@@ -24,46 +24,71 @@ type userInput struct {
 func GetMyProfil(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	if userID == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Token tidak valid"})
-	}
-
-	var user models.User
-
-	if err := database.DB.Find(&user, userID).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "User tidak ditemukan",
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"Token tidak valid"},
+			"data":    nil,
 		})
 	}
 
-	var result models.User
-	database.DB.Preload("Toko").First(&result, user.ID)
+	var user models.User
+	if err := database.DB.Preload("Toko").First(&user, userID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"User tidak ditemukan"},
+			"data":    nil,
+		})
+	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": result,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    user,
 	})
 }
 
 func UpdateProfil(c *fiber.Ctx) error {
 	var input userInput
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Input tidak valid"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{"Input tidak valid"},
+			"data":    nil,
+		})
 	}
 
 	userID := c.Locals("user_id")
 	if userID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Token tidak valid",
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{"Token tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	var user models.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "User tidak ditemukan"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{"User tidak ditemukan"},
+			"data":    nil,
+		})
 	}
 
 	if strings.TrimSpace(input.KataSandi) != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.KataSandi), bcrypt.DefaultCost)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Gagal meng-hash password"})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":  false,
+				"message": "Failed to PUT data",
+				"errors":  []string{"Gagal meng-hash password"},
+				"data":    nil,
+			})
 		}
 		user.KataSandi = string(hashedPassword)
 	}
@@ -71,26 +96,48 @@ func UpdateProfil(c *fiber.Ctx) error {
 	if strings.TrimSpace(input.TanggalLahir) != "" {
 		tgl, err := time.Parse("02/01/2006", input.TanggalLahir)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Format tanggal_lahir harus DD/MM/YYYY"})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status":  false,
+				"message": "Failed to PUT data",
+				"errors":  []string{"Format tanggal_lahir harus DD/MM/YYYY"},
+				"data":    nil,
+			})
 		}
 		user.TanggalLahir = tgl
 	}
 
-	user.Nama = input.Nama
-	user.NoTelp = input.NoTelp
-	user.Pekerjaan = input.Pekerjaan
-	user.Email = input.Email
-	user.IDProvinsi = input.IDProvinsi
-	user.IDKota = input.IDKota
-
-	if err := database.DB.Save(&user).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Gagal memperbarui profil"})
+	if input.Nama != "" {
+		user.Nama = input.Nama
+	}
+	if input.NoTelp != "" {
+		user.NoTelp = input.NoTelp
+	}
+	if input.Pekerjaan != "" {
+		user.Pekerjaan = input.Pekerjaan
+	}
+	if input.Email != "" {
+		user.Email = input.Email
+	}
+	if input.IDProvinsi != "" {
+		user.IDProvinsi = input.IDProvinsi
+	}
+	if input.IDKota != "" {
+		user.IDKota = input.IDKota
 	}
 
-	var result models.User
-	database.DB.Preload("Toko").First(&result, user.ID)
+	if err := database.DB.Save(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
+		})
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Profil berhasil diperbarui",
-		"data":    result,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    "",
 	})
 }

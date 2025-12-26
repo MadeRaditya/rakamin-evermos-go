@@ -4,7 +4,6 @@ import (
 	"backend-evermos/database"
 	"backend-evermos/models"
 	"fmt"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,30 +12,71 @@ type CategoryInput struct {
 	NamaCategory string `json:"nama_category"`
 }
 
+func isAdmin(c *fiber.Ctx) bool {
+	userIDLocals := c.Locals("user_id")
+	if userIDLocals == nil {
+		return false
+	}
+
+	userIDFloat, ok := userIDLocals.(float64)
+	if !ok {
+		return false
+	}
+
+	var user models.User
+	if err := database.DB.First(&user, uint(userIDFloat)).Error; err != nil {
+		return false
+	}
+	return user.IsAdmin
+}
+
 func GetAllCategory(c *fiber.Ctx) error {
 	var categories []models.Category
 
 	if err := database.DB.Find(&categories).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Gagal mengambil data",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": categories,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    categories,
 	})
 }
 
 func CreateCategory(c *fiber.Ctx) error {
+	if !isAdmin(c) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"Unauthorized"},
+			"data":    nil,
+		})
+	}
+
 	var categoryInput CategoryInput
 
 	if err := c.BodyParser(&categoryInput); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Input tidak valid"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"Input tidak valid"},
+			"data":    nil,
+		})
 	}
 
 	if categoryInput.NamaCategory == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Nama category wajib diisi",
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"Nama category wajib diisi"},
+			"data":    nil,
 		})
 	}
 
@@ -46,16 +86,18 @@ func CreateCategory(c *fiber.Ctx) error {
 
 	if err := database.DB.Create(&category).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Gagal menambahkan category.",
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Category berhasil ditambahkan",
-		"data": fiber.Map{
-			"id":            category.ID,
-			"nama_category": category.NamaCategory,
-		},
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  true,
+		"message": "Succeed to POST data",
+		"errors":  nil,
+		"data":    category.ID,
 	})
 }
 
@@ -65,92 +107,137 @@ func GetCategoryByID(c *fiber.Ctx) error {
 	var categoryID uint
 	if _, err := fmt.Sscan(id, &categoryID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "ID tidak valid",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"ID tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	var category models.Category
 	if err := database.DB.First(&category, categoryID).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Category tidak ditemukan",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"No Data Category"},
+			"data":    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": category,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    category,
 	})
 }
 
 func UpdateCategory(c *fiber.Ctx) error {
-	id := c.Params("id")
+	if !isAdmin(c) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{"Unauthorized"},
+			"data":    nil,
+		})
+	}
 
+	id := c.Params("id")
 	var categoryID uint
 	if _, err := fmt.Sscan(id, &categoryID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "ID tidak valid",
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{"ID tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	var category models.Category
 	if err := database.DB.First(&category, categoryID).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Category tidak ditemukan",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"record not found"},
+			"data":    nil,
 		})
 	}
 
 	var updateData CategoryInput
 	if err := c.BodyParser(&updateData); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid request body",
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{"Invalid request body"},
+			"data":    nil,
 		})
 	}
 
-	if strings.TrimSpace(updateData.NamaCategory) == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Nama category wajib diisi",
-		})
+	if updateData.NamaCategory != "" {
+		category.NamaCategory = updateData.NamaCategory
 	}
 
-	category.NamaCategory = updateData.NamaCategory
-
-	if err := database.DB.Model(&category).Updates(models.Category{
-		NamaCategory: updateData.NamaCategory}).Error; err != nil {
+	if err := database.DB.Save(&category).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"Message": "Gagal memperbarui category",
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Category berhasil di perbarui",
-		"data":    category,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    "",
 	})
 }
 
 func DeleteCategory(c *fiber.Ctx) error {
-	id := c.Params("id")
+	if !isAdmin(c) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to DELETE data",
+			"errors":  []string{"Unauthorized"},
+			"data":    nil,
+		})
+	}
 
+	id := c.Params("id")
 	var categoryID uint
 	if _, err := fmt.Sscan(id, &categoryID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "ID tidak valid",
+			"status":  false,
+			"message": "Failed to DELETE data",
+			"errors":  []string{"ID tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	var category models.Category
 	if err := database.DB.First(&category, categoryID).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Category tidak ditemukan",
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"record not found"},
+			"data":    nil,
 		})
 	}
 
 	if err := database.DB.Delete(&category).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Gagal menghapus category",
+			"status":  false,
+			"message": "Failed to DELETE data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Category berhasil dihapus",
-		"data":    category,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    "",
 	})
 }

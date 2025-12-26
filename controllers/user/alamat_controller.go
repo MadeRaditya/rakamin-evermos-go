@@ -24,34 +24,67 @@ type AlamatUpdate struct {
 func GetMyAlamat(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	if userID == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Token tidak valid"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"Token tidak valid"},
+			"data":    nil,
+		})
 	}
 
 	var alamat []models.Alamat
-	if err := database.DB.Where("id_user = ?", userID).Find(&alamat).Error; err != nil {
+	query := database.DB.Where("id_user = ?", userID)
+
+	if judul := c.Query("judul_alamat"); judul != "" {
+		query = query.Where("judul_alamat LIKE ?", "%"+judul+"%")
+	}
+
+	if err := query.Find(&alamat).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Gagal mengambil alamat",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": alamat,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    alamat,
 	})
 }
 
 func CreateAlamat(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
-	var input AlamatInput
-
 	if userID == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Token tidak valid"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"Token tidak valid"},
+			"data":    nil,
+		})
 	}
 
+	var input AlamatInput
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Input tidak valid"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{"Input tidak valid"},
+			"data":    nil,
+		})
 	}
 
-	uid := uint(userID.(float64))
+	uidFloat, ok := userID.(float64)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status": false, "message": "Failed to POST data", "errors": []string{"User ID Error"}, "data": nil,
+		})
+	}
+	uid := uint(uidFloat)
+
 	alamat := models.Alamat{
 		IDUser:       uid,
 		JudulAlamat:  input.JudulAlamat,
@@ -62,13 +95,18 @@ func CreateAlamat(c *fiber.Ctx) error {
 
 	if err := database.DB.Create(&alamat).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Gagal menambahkan Alamat.",
+			"status":  false,
+			"message": "Failed to POST data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Alamat berhasil ditambahkan",
-		"data":    alamat,
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  true,
+		"message": "Succeed to POST data",
+		"errors":  nil,
+		"data":    alamat.ID,
 	})
 }
 
@@ -76,26 +114,31 @@ func GetAlamatByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("user_id")
 
-	if userID == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Token tidak valid"})
-	}
-
 	var alamatID uint
 	if _, err := fmt.Sscan(id, &alamatID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "ID tidak valid",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"ID tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	var alamat models.Alamat
 	if err := database.DB.Where("id = ? AND id_user = ?", alamatID, userID).First(&alamat).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Alamat tidak ditemukan",
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"record not found"},
+			"data":    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": alamat,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    alamat,
 	})
 }
 
@@ -104,26 +147,33 @@ func UpdateAlamat(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	var input AlamatUpdate
 
-	if userID == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Token tidak valid"})
-	}
-
 	var alamatID uint
 	if _, err := fmt.Sscan(id, &alamatID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "ID tidak valid",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"ID tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Input tidak valid",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"Input tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	var alamat models.Alamat
 	if err := database.DB.Where("id = ? AND id_user = ?", alamatID, userID).First(&alamat).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Alamat tidak ditemukan"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"record not found"},
+			"data":    nil,
+		})
 	}
 
 	alamat.NamaPenerima = input.NamaPenerima
@@ -131,12 +181,19 @@ func UpdateAlamat(c *fiber.Ctx) error {
 	alamat.DetailAlamat = input.DetailAlamat
 
 	if err := database.DB.Save(&alamat).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Gagal Memperbarui alamat"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to PUT data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Alamat berhasil diperbarui",
-		"data":    alamat,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    "",
 	})
 }
 
@@ -144,32 +201,39 @@ func DeleteAlamat(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("user_id")
 
-	if userID == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Token tidak valid"})
-	}
-
 	var alamatID uint
 	if _, err := fmt.Sscan(id, &alamatID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "ID tidak valid",
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"ID tidak valid"},
+			"data":    nil,
 		})
 	}
 
 	var alamat models.Alamat
 	if err := database.DB.Where("id = ? AND id_user = ?", alamatID, userID).First(&alamat).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Alamat tidak ditemukan",
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  false,
+			"message": "Failed to GET data",
+			"errors":  []string{"record not found"},
+			"data":    nil,
 		})
 	}
 
 	if err := database.DB.Delete(&alamat).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Gagal menghapus alamat",
+			"status":  false,
+			"message": "Failed to DELETE data",
+			"errors":  []string{err.Error()},
+			"data":    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Alamat berhasil dihapus",
-		"data":    alamat,
+		"status":  true,
+		"message": "Succeed to GET data",
+		"errors":  nil,
+		"data":    "",
 	})
 }
