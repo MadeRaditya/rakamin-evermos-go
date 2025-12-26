@@ -25,6 +25,7 @@ func main() {
 	routes.AuthRoute(api)
 	routes.CategoryRoute(api)
 	routes.UserRoute(api)
+	routes.TokoRoute(api)
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {

@@ -21,7 +21,7 @@ type AlamatUpdate struct {
 	DetailAlamat string `json:"detail_alamat"`
 }
 
-func GetAllAlamat(c *fiber.Ctx) error {
+func GetMyAlamat(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	if userID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Token tidak valid"})

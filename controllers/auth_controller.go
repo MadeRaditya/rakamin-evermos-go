@@ -105,7 +105,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString(config.JWTSecret)
+	t, err := token.SignedString(config.JWTSecret())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Gagal generate token"})
 	}

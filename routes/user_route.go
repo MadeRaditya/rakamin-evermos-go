@@ -13,7 +13,7 @@ func UserRoute(api fiber.Router) {
 	userRoute.Get("/", user.GetMyProfil)
 	userRoute.Put("/", user.UpdateProfil)
 
-	userRoute.Get("/alamat", user.GetAllAlamat)
+	userRoute.Get("/alamat", user.GetMyAlamat)
 	userRoute.Post("/alamat", user.CreateAlamat)
 	userRoute.Get("/alamat/:id", user.GetAlamatByID)
 	userRoute.Put("/alamat/:id", user.UpdateAlamat)
