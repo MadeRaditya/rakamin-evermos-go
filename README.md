@@ -46,7 +46,7 @@ Repository ini adalah hasil pengerjaan tugas akhir (Final Task) untuk **Rakamin 
 ### Langkah-langkah
 1.  **Clone Repository**
     ```bash
-    git clone [github.com/MadeRaditya/rakamin-evermos-go.git](github.com/MadeRaditya/rakamin-evermos-go.git)
+    git clone github.com/MadeRaditya/rakamin-evermos-go.git
     cd rakamin-evermos-go
     ```
 
