@@ -1,7 +1,7 @@
 package database
 
 import (
-	"backend-evermos/models"
+	"github.com/MadeRaditya/rakamin-evermos-go/models"
 	"fmt"
 
 	"os"

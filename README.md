@@ -46,7 +46,7 @@ Repository ini adalah hasil pengerjaan tugas akhir (Final Task) untuk **Rakamin 
 ### Langkah-langkah
 1.  **Clone Repository**
     ```bash
-    git clone [https://github.com/username-kamu/rakamin-evermos-go.git](https://github.com/username-kamu/rakamin-evermos-go.git)
+    git clone [github.com/MadeRaditya/rakamin-evermos-go.git](github.com/MadeRaditya/rakamin-evermos-go.git)
     cd rakamin-evermos-go
     ```
 
@@ -57,13 +57,39 @@ Repository ini adalah hasil pengerjaan tugas akhir (Final Task) untuk **Rakamin 
 
 3.  **Setup Database**
     * Buat database baru di MySQL dengan nama: `rakamin_evermos_go`.
-    * Pastikan konfigurasi di `database/config.go` sesuai dengan username/password MySQL kamu.
-    * *Opsional:* Aplikasi menggunakan `AutoMigrate`, jadi tabel akan otomatis dibuat saat server dijalankan.
+    * Pastikan konfigurasi username/password database sudah sesuai (lihat langkah selanjutnya).
+    * *Catatan:* Kamu **tidak perlu** meng-import tabel secara manual. Aplikasi ini menggunakan **Auto Migration**, sehingga tabel akan otomatis dibuat saat server dijalankan pertama kali.
 
 4.  **Setup Environment Variables**
-    Buat file `.env` di root folder dan isi konfigurasi berikut (atau sesuaikan di `main.go`/`config`):
+    Duplikat file `.env.example` menjadi `.env`, lalu sesuaikan isinya dengan konfigurasi lokal kamu (seperti DB Password atau JWT Secret).
+    
+    **Linux/Mac:**
+    ```bash
+    cp .env.example .env
+    ```
+    
+    **Windows (CMD/Powershell):**
+    ```cmd
+    copy .env.example .env
+    ```
+    
+    *Pastikan isi `.env` sudah benar, contoh:*
     ```env
-    JWT_SECRET=rahasia_negara
+    APP_PORT=8000
+
+    DB_DRIVER=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_USER=root
+    DB_PASSWORD=
+    DB_NAME=rakamin_evermos_go
+
+    DB_CHARSET=utf8mb4
+    DB_PARSE_TIME=true
+    DB_LOC=Local
+
+    JWT_SECRET=rahasia_negara_bos
+    
     ```
 
 5.  **Jalankan Server**

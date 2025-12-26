@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"backend-evermos/config"
-	"backend-evermos/database"
-	"backend-evermos/models"
+	"github.com/MadeRaditya/rakamin-evermos-go/config"
+	"github.com/MadeRaditya/rakamin-evermos-go/database"
+	"github.com/MadeRaditya/rakamin-evermos-go/models"
 	"strings"
 	"time"
 

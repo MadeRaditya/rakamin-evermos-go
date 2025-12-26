@@ -1,8 +1,8 @@
 package user
 
 import (
-	"backend-evermos/database"
-	"backend-evermos/models"
+	"github.com/MadeRaditya/rakamin-evermos-go/database"
+	"github.com/MadeRaditya/rakamin-evermos-go/models"
 	"strings"
 	"time"
 

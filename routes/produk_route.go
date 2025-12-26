@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"backend-evermos/controllers"
-	"backend-evermos/middlewares"
+	"github.com/MadeRaditya/rakamin-evermos-go/controllers"
+	"github.com/MadeRaditya/rakamin-evermos-go/middlewares"
 
 	"github.com/gofiber/fiber/v2"
 )

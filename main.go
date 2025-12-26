@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"backend-evermos/database"
-	"backend-evermos/routes"
+	"github.com/MadeRaditya/rakamin-evermos-go/database"
+	"github.com/MadeRaditya/rakamin-evermos-go/routes"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"

@@ -3,7 +3,7 @@ package middlewares
 import (
 	"strings"
 
-	"backend-evermos/config"
+	"github.com/MadeRaditya/rakamin-evermos-go/config"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
