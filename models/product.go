@@ -16,5 +16,7 @@ type Product struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 
 	// Relasi
-	Photos []FotoProduk `gorm:"foreignKey:IDProduk"`
+	Toko     Toko         `gorm:"foreignKey:IDToko" json:"toko"`
+	Category Category     `gorm:"foreignKey:IDCategory" json:"category"`
+	Photos   []FotoProduk `gorm:"foreignKey:IDProduk"`
 }

@@ -11,4 +11,7 @@ type DetailTrx struct {
 	HargaTotal  int       `json:"harga_total"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+
+	Product LogProduk `gorm:"foreignKey:IDLogProduk" json:"product"`
+	Toko    Toko      `gorm:"foreignKey:IDToko" json:"toko"`
 }

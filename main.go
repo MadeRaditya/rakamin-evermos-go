@@ -27,6 +27,7 @@ func main() {
 	routes.UserRoute(api)
 	routes.TokoRoute(api)
 	routes.ProductRouter(api)
+	routes.TrxRoute(api)
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {

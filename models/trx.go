@@ -14,4 +14,5 @@ type Trx struct {
 
 	// Relasi
 	DetailTrx []DetailTrx `gorm:"foreignKey:IDTrx"`
+	Alamat    Alamat      `gorm:"foreignKey:AlamatPengiriman" json:"alamat_kirim"`
 }

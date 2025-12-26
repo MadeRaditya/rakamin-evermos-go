@@ -8,9 +8,11 @@ import (
 )
 
 func ProductRouter(api fiber.Router) {
-	productRoute := api.Group("/product", middlewares.JWTAuth)
+	product := api.Group("/product", middlewares.JWTAuth)
 
-	productRoute.Get("/", controllers.GetAllProduk)
-	productRoute.Post("/", controllers.CreateProduct)
-
+	product.Get("/", controllers.GetAllProduct)
+	product.Post("/", controllers.CreateProduct)
+	product.Get("/:id", controllers.GetProductByID)
+	product.Put("/:id", controllers.UpdateProduct)
+	product.Delete("/:id", controllers.DeleteProduct)
 }
